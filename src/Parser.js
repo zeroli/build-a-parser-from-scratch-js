@@ -61,7 +61,7 @@ class Parser {
     StringLiteral() {
         const token = this._eat('STRING');
         return {
-            type: 'STRING',
+            type: 'StringLiteral',
             value: token.value.slice(1, -1),
         };
     }
