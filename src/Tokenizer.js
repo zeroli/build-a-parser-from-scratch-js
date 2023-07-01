@@ -1,4 +1,23 @@
 /**
+ * Tokenize spec.
+ */
+const Spec = [
+    // whitespaces
+    [/^\s+/, null],
+
+    // single line comment: // xxxx
+    [/^\/\/.*/, null],
+    // multi-line comment:  /* xxxx */
+    [/^\/\*[\s\S]*?\*\//, null],
+
+    // Number
+    [/^\d+/, 'NUMBER'],
+
+    // String
+    [/^"[^"]*"/, 'STRING'],
+    [/^'[^']*'/, 'STRING'],
+]
+/**
  * Tokenizer class.
  * Lazily pulls a token from a stream.
  */
@@ -34,44 +53,38 @@ class Tokenizer {
             return null;
         }
         const string = this._string.slice(this._cursor);
-        // Numbers
-        if (!Number.isNaN(Number(string[0]))) {
-            let number= '';
-            while (!Number.isNaN(Number(string[this._cursor]))) {
-                number += string[this._cursor++];
+        for (const [regexp, tokenType] of Spec) {
+            const tokenValue = this._match(regexp, string);
+
+            if (tokenValue == null) {
+                continue;
             }
+            // e.g. whitespace
+            if (tokenType == null) {
+                return this.getNextToken();
+            }
+
             return {
-                type: 'NUMBER',
-                value: number,
+                type: tokenType,
+                value: tokenValue,
             };
         }
 
-        // Strings
-        if (string[0] == '"') {
-            let s = '';
-            do {
-                s += string[this._cursor++];
-            } while (string[this._cursor] !== '"' && !this.isEOF());
-            s += string[this._cursor++];  // skip "
-            return {
-                type: 'STRING',
-                value: s,
-            };
-        }
-        if (string[0] == "'") {
-            let s = '';
-            do {
-                s += string[this._cursor++];
-            } while (string[this._cursor] !== "'" && !this.isEOF());
-            s += string[this._cursor++];  // skip '
-            return {
-                type: 'STRING',
-                value: s,
-            };
-        }
         throw new SyntaxError(
-            `Unknown token: "${string[0]}"`,
+            `Unknown token: "${string[0]}"`
         );
+    }
+
+    /**
+     *
+     */
+    _match(regexp, string) {
+        const matched = regexp.exec(string);
+        if (matched !== null) {
+            this._cursor += matched[0].length;
+            return matched[0];
+        }
+        return null;
     }
 }
 
