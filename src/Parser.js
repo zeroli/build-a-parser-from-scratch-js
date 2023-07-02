@@ -43,9 +43,10 @@ class Parser {
      *      : Statement
      *      | Statement StatementList
      */
-    StatementList() {
+    StatementList(stopLookahead = null) {
         const statementList = [this.Statement()];
-        while (this._lookahead !== null) {
+        while (this._lookahead !== null &&
+            this._lookahead.type !== stopLookahead) {
             statementList.push(this.Statement());
         }
         return statementList;
@@ -54,10 +55,49 @@ class Parser {
     /**
      * Statement
      *      : ExpressionStatement
+     *      | BlockStatement
+     *      | EmptyStatement
      *      ;
      */
     Statement() {
-        return this.ExpressionStatement();
+        switch (this._lookahead.type) {
+            case ';':
+                return this.EmptyStatement();
+            case '{':
+                return this.BlockStatement();
+            default:
+                return this.ExpressionStatement();
+        }
+    }
+
+    /**
+     * EmptyStatement
+     *      : ';'
+     *      ;
+     */
+    EmptyStatement() {
+        this._eat(';');
+        return {
+            type: 'EmptyStatement',
+        };
+    }
+    /**
+     * BlockStatement
+     *      : '{' OptStatementList '}'
+     *      ;
+     */
+    BlockStatement() {
+        this._eat('{');
+        // since StatementList will parse until the end of input
+        // so we need ask it to stop at '}'
+        const body = this._lookahead.type !== '}'
+            ? this.StatementList('}')
+            : [];
+        this._eat('}');
+        return {
+            type: 'BlockStatement',
+            body,
+        };
     }
 
     /**
@@ -136,7 +176,7 @@ class Parser {
         }
         if (token.type !== tokenType) {
             throw new SyntaxError(
-                `Unexecpted token: "${token.value}", expected: "${tokenType}"`,
+                `Unexpected token: "${token.value}", expected: "${tokenType}"`,
             );
         }
 
