@@ -17,7 +17,7 @@ const DefaultFactory = {
             type: 'EmptyStatement',
         };
     },
-    BlockStatement() {
+    BlockStatement(body) {
         return {
             type: 'BlockStatement',
             body,
@@ -167,11 +167,57 @@ class Parser {
 
     /**
      * Expression
-     *      : Literal
+     *      : AdditiveExpression
      *      ;
      */
     Expression() {
-        return this.Literal();
+        return this.AdditiveExpression();
+    }
+
+    /**
+     * AdditiveExpression
+     *      : MultiplicativeExpression
+     *      | AdditiveExpression ADDITIVE_OPERATOR MultiplicativeExpression
+     *      ;
+     */
+    AdditiveExpression() {
+        let left = this.MultiplicativeExpression();
+
+        while (this._lookahead.type === 'ADDITIVE_OPERATOR') {
+            // Operator: +, -
+            const operator = this._eat('ADDITIVE_OPERATOR').value;
+            const right = this.MultiplicativeExpression();
+            left = {
+                type: 'BinaryExpression',
+                operator,
+                left,
+                right,
+            };
+        }
+        return left;
+    }
+    /**
+     * MultiplicativeExpression
+     *      : Literal
+     *      | MultiplicativeExpression MULTIPLICATIVE_OPERATOR Literal
+     *      ;
+     */
+    MultiplicativeExpression() {
+        let left = this.Literal();
+
+        while (this._lookahead.type === 'MULTIPLICATIVE_OPERATOR') {
+            // operator: *, /
+            const operator = this._eat('MULTIPLICATIVE_OPERATOR').value;
+            const right = this.Literal();
+            left = {
+                type: 'BinaryExpression',
+                operator,
+                left,
+                right,
+            };
+        }
+
+        return left;
     }
 
     /**

@@ -14,6 +14,8 @@ const Spec = [
     [/^;/, ';'],
     [/^{/, '{'],
     [/^}/, '}'],
+    [/^[+-]/, 'ADDITIVE_OPERATOR'],
+    [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
 
     // Number
     [/^\d+/, 'NUMBER'],

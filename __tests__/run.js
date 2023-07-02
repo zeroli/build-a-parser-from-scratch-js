@@ -13,6 +13,7 @@ const tests = [
     require('./statement-list-test.js'),
     require('./block-test.js'),
     require('./empty-statement-test.js'),
+    require('./math-test.js'),
 ];
 
 const parser = new Parser();
@@ -38,9 +39,9 @@ function test(program, expected) {
     assert.deepEqual(ast, expected);
 }
 
-exec();
+//exec();
 
 // run all tests
-//tests.forEach(testRun => testRun(test));
+tests.forEach(testRun => testRun(test));
 
 console.log("all test passed");
