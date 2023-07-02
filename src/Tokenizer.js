@@ -10,6 +10,9 @@ const Spec = [
     // multi-line comment:  /* xxxx */
     [/^\/\*[\s\S]*?\*\//, null],
 
+    // Symbols, delimiters:
+    [/^;/, ';'],
+
     // Number
     [/^\d+/, 'NUMBER'],
 
