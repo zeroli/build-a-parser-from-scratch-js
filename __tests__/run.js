@@ -14,6 +14,7 @@ const tests = [
     require('./block-test.js'),
     require('./empty-statement-test.js'),
     require('./math-test.js'),
+    require('./assignment-test.js'),
 ];
 
 const parser = new Parser();
@@ -26,7 +27,7 @@ function exec() {
          */
         "hello";
         // Number:
-        42;
+        x = 42 + 20;
     `;
     const ast = parser.parse(program);
 
@@ -39,7 +40,7 @@ function test(program, expected) {
     assert.deepEqual(ast, expected);
 }
 
-//exec();
+exec();
 
 // run all tests
 tests.forEach(testRun => testRun(test));

@@ -1,5 +1,5 @@
 /**
- * Tokenize spec.
+ * Tokenize spec. Order matters!
  */
 const Spec = [
     // whitespaces
@@ -17,12 +17,19 @@ const Spec = [
     [/^\(/, '('],
     [/^\)/, ')'],
 
-    // math operators: +, -, *, /
-    [/^[+-]/, 'ADDITIVE_OPERATOR'],
-    [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
-
     // Number
     [/^\d+/, 'NUMBER'],
+
+    // Identifiers:
+    [/^\w+/, 'IDENTIFIER'],
+
+    // Assignment operators: =, *=, /=, +=, -=
+    [/^=/, 'SIMPLE_ASSIGN'],
+    [/^[*\/+-]=/, 'COMPLEX_ASSIGN'],
+
+    // math operators: +, -, *, /
+    [/^[+-]/, 'ADDITIVE_OPERATOR'],
+    [/^[*/]/, 'MULTIPLICATIVE_OPERATOR'],
 
     // String
     [/^"[^"]*"/, 'STRING'],
