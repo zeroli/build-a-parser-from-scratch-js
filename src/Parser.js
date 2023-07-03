@@ -181,34 +181,31 @@ class Parser {
      *      ;
      */
     AdditiveExpression() {
-        let left = this.MultiplicativeExpression();
-
-        while (this._lookahead.type === 'ADDITIVE_OPERATOR') {
-            // Operator: +, -
-            const operator = this._eat('ADDITIVE_OPERATOR').value;
-            const right = this.MultiplicativeExpression();
-            left = {
-                type: 'BinaryExpression',
-                operator,
-                left,
-                right,
-            };
-        }
-        return left;
+        return this._BinaryExpression(
+            'MultiplicativeExpression',
+            'ADDITIVE_OPERATOR'
+        );
     }
     /**
      * MultiplicativeExpression
-     *      : Literal
-     *      | MultiplicativeExpression MULTIPLICATIVE_OPERATOR Literal
+     *      : PrimaryExpression
+     *      | MultiplicativeExpression MULTIPLICATIVE_OPERATOR PrimaryExpression
      *      ;
      */
     MultiplicativeExpression() {
-        let left = this.Literal();
+        return this._BinaryExpression(
+            'PrimaryExpression',
+            'MULTIPLICATIVE_OPERATOR'
+        );
+    }
 
-        while (this._lookahead.type === 'MULTIPLICATIVE_OPERATOR') {
+    _BinaryExpression(buildName, operatorToken) {
+        let left = this[buildName]();
+
+        while (this._lookahead.type === operatorToken) {
             // operator: *, /
-            const operator = this._eat('MULTIPLICATIVE_OPERATOR').value;
-            const right = this.Literal();
+            const operator = this._eat(operatorToken).value;
+            const right = this[buildName]();
             left = {
                 type: 'BinaryExpression',
                 operator,
@@ -218,6 +215,34 @@ class Parser {
         }
 
         return left;
+    }
+
+    /**
+     * PrimaryExpression
+     *      : Literal
+     *      | ParenthesizedExpression
+     *      ;
+     */
+    PrimaryExpression() {
+        switch (this._lookahead.type) {
+            case '(':
+                return this.ParenthesizedExpression();
+            default:
+                return this.Literal();
+        }
+    }
+
+    /**
+     * ParenthesizedExpression
+     *      : '(' Expression ')'
+     *      ;
+     *
+     */
+    ParenthesizedExpression() {
+        this._eat('(');
+        const expression = this.Expression();
+        this._eat(')');
+        return expression;
     }
 
     /**
@@ -260,7 +285,7 @@ class Parser {
      */
     _eat(tokenType) {
         const token = this._lookahead;
-        if (token == null) {
+        if (token === null) {
             throw new SyntaxError(
                 `Unexpected end of input, expected: "${tokenType}"`,
             );
