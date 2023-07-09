@@ -103,7 +103,11 @@ class Parser {
      *      | Statement StatementList
      */
     StatementList(stopLookahead = null) {
-        const statementList = [this.Statement()];
+        const statementList = [];
+        if (this._lookahead === null) {
+            return statementList;
+        }
+        statementList.push(this.Statement());
         while (this._lookahead !== null &&
             this._lookahead.type !== stopLookahead) {
             statementList.push(this.Statement());
@@ -120,6 +124,7 @@ class Parser {
      *      | IfStatement
      *      | IterationStatement
      *      | FunctionDeclaration
+     *      | ClassDeclaration
      *      | ReturnStatement
      *      ;
      */
@@ -133,6 +138,8 @@ class Parser {
                 return this.VariableStatement();
             case 'def':
                 return this.FunctionDeclaration();
+            case 'class':
+                return this.ClassDeclaration();
             case 'return':
                 return this.ReturnStatement();
             case 'if':
@@ -144,6 +151,39 @@ class Parser {
             default:
                 return this.ExpressionStatement();
         }
+    }
+
+    /**
+     * ClassDeclaration
+     *      : 'class' Identifier OptClassExtends BlockStatement
+     *      ;
+     */
+    ClassDeclaration() {
+        this._eat('class');
+        const id = this.Identifier();
+        const superClass =
+            this._lookahead.type === 'extends'
+                ? this.ClassExtends()
+                : null;
+
+        const body = this.BlockStatement();
+        return {
+            type: 'ClassDeclaration',
+            superClass,
+            id,
+            body,
+        };
+    }
+
+    /**
+     * ClassExtends
+     *      : 'extends' Identifier
+     *      ;
+     *
+     */
+    ClassExtends() {
+        this._eat('extends');
+        return this.Identifier();
     }
 
     /**
@@ -558,7 +598,7 @@ class Parser {
 
     /**
      * LeftHandSideExpression
-     *      : MemberExpression
+     *      : CallMemberExpression
      *      ;
      */
     LeftHandSideExpression() {
@@ -567,17 +607,73 @@ class Parser {
 
     /**
      * CallMemberExpression
-     *      : Identifier
-     *      | CallMemberExpression '.' Identifier
-     *      | CallMemberExpression '[' Expression ']'
-     *      | CallMemberExpression '(' OptCallArgumentList ')'
+     *      : MemberExpression
+     *      | CallExpression
      *      ;
      */
     CallMemberExpression() {
-        let object = this.Identifier();
+        // Super call:
+        if (this._lookahead.type === 'super') {
+            return this._CallExpression(this.Super());
+        }
+
+        // Member part, might be part of a call
+        const member = this.MemberExpression();
+
+        // See if we have a call expression
+        if (this._lookahead.type === '(') {
+            return this._CallExpression(member);
+        }
+        return member;
+    }
+
+    /**
+     * Super
+     *      : 'super'
+     *      ;
+     */
+    Super() {
+        this._eat('super');
+        return {
+            type: 'Super',
+        };
+    }
+
+    /**
+     * Generic call expression helper
+     *
+     * CallExpression
+     *      : Callee Arguments
+     *
+     * Callee
+     *      : MemberExpression
+     *      | CallExpression
+     *      ;
+     */
+    _CallExpression(callee) {
+        let callExpression = {
+            type: 'CallExpression',
+            callee,
+            arguments: this.Arguments(),
+        };
+        if (this._lookahead.type === '(') {
+            callExpression = this._CallExpression(callExpression);
+        }
+        return callExpression;
+    }
+
+    /**
+     * MemberExpression
+     *      : PrimaryExpression
+     *      | MemberExpression ',' Identifier
+     *      | MemberExpression '[' Expression ']'
+     *      ;
+     *
+     */
+    MemberExpression() {
+        let object = this.PrimaryExpression();
         while (this._lookahead.type === '.' ||
-             this._lookahead.type === '[' ||
-             this._lookahead.type === '(') {
+             this._lookahead.type === '[') {
             if (this._lookahead.type === '.') {
                 this._eat('.');
                 const property = this.Identifier();
@@ -599,19 +695,21 @@ class Parser {
                     property,
                 };
             }
-            if (this._lookahead.type === '(') {
-                this._eat('(');
-                const args = this._lookahead.type !== ')' ?
-                    this.OptCallArgumentList() : [];
-                this._eat(')');
-                object = {
-                    type: 'CallExpression',
-                    callee: object,
-                    arguments: args,
-                };
-            }
         }
         return object;
+    }
+
+    /**
+     * Arguments
+     *      : '(' OptCallArgumentList ')'
+     *      ;
+     */
+    Arguments() {
+        this._eat('(');
+        const args = this._lookahead.type !== ')'
+            ? this.OptCallArgumentList() : [];
+        this._eat(')');
+        return args;
     }
 
     /**
@@ -679,7 +777,7 @@ class Parser {
      */
     MultiplicativeExpression() {
         return this._BinaryExpression(
-            'PrimaryExpression',
+            'UnaryExpression',
             'MULTIPLICATIVE_OPERATOR'
         );
     }
@@ -704,9 +802,9 @@ class Parser {
     /**
      * PrimaryExpression
      *      : Literal
-     *      | UnaryExpression
      *      | ParenthesizedExpression
-     *      | LeftHandSideExpression
+     *      | ThisExpression
+     *      | NewExpression
      *      ;
      */
     PrimaryExpression() {
@@ -719,10 +817,42 @@ class Parser {
         switch (this._lookahead.type) {
             case '(':
                 return this.ParenthesizedExpression();
+            case 'IDENTIFIER':
+                return this.Identifier();
+            case 'this':
+                return this.ThisExpression();
+            case 'new':
+                return this.NewExpression();
             default:
-                return this.LeftHandSideExpression();
+                throw new SyntaxError(`Unexpected promary expression.`);
         }
     }
+
+    /**
+     * ThisExpression
+     *      : 'this' '.'
+     */
+    ThisExpression() {
+        this._eat('this');
+        return {
+            type: 'ThisExpression',
+        };
+    }
+
+    /**
+     * NewExpression
+     *      : 'new' MemberExpression Arguments
+     *      ;
+     */
+    NewExpression() {
+        this._eat('new');
+        return {
+            type: 'NewExpression',
+            callee: this.MemberExpression(),
+            arguments: this.Arguments(),
+        }
+    }
+
 
     /**
      * Whether the token is unary oeprator
@@ -734,7 +864,8 @@ class Parser {
 
     /**
      * UnaryExpression
-     *      : '-' Expression
+     *      : LeftHandSideExpression
+     *      | '-' Expression
      *      | '!' Expression
      *      ;
      */
@@ -755,6 +886,7 @@ class Parser {
                 argument: this.Expression(),
             };
         }
+        return this.LeftHandSideExpression();
     }
 
     /**
