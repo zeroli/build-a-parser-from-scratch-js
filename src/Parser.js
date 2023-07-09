@@ -458,6 +458,7 @@ class Parser {
     /**
      * PrimaryExpression
      *      : Literal
+     *      | UnaryExpression
      *      | ParenthesizedExpression
      *      | LeftHandSideExpression
      *      ;
@@ -466,11 +467,47 @@ class Parser {
         if (this._isLiteral(this._lookahead.type)) {
             return this.Literal();
         }
+        if (this._isUnaryOperator(this._lookahead.type)) {
+            return this.UnaryExpression();
+        }
         switch (this._lookahead.type) {
             case '(':
                 return this.ParenthesizedExpression();
             default:
                 return this.LeftHandSideExpression();
+        }
+    }
+
+    /**
+     * Whether the token is unary oeprator
+     */
+    _isUnaryOperator(tokenType) {
+        return tokenType === 'ADDITIVE_OPERATOR' ||
+            tokenType == 'LOGICAL_NOT';
+    }
+
+    /**
+     * UnaryExpression
+     *      : '-' Expression
+     *      | '!' Expression
+     *      ;
+     */
+    UnaryExpression() {
+        let operator;
+        switch (this._lookahead.type) {
+            case 'ADDITIVE_OPERATOR':
+                operator = this._eat('ADDITIVE_OPERATOR').value;
+                break;
+            case 'LOGICAL_NOT':
+                operator = this._eat('LOGICAL_NOT').value;
+                break;
+        }
+        if (operator != null) {
+            return {
+                type: 'UnaryExpression',
+                operator,
+                argument: this.Expression(),
+            };
         }
     }
 
