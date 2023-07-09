@@ -119,6 +119,8 @@ class Parser {
      *      | VariableStatement
      *      | IfStatement
      *      | IterationStatement
+     *      | FunctionDeclaration
+     *      | ReturnStatement
      *      ;
      */
     Statement() {
@@ -129,6 +131,10 @@ class Parser {
                 return this.BlockStatement();
             case 'let':
                 return this.VariableStatement();
+            case 'def':
+                return this.FunctionDeclaration();
+            case 'return':
+                return this.ReturnStatement();
             case 'if':
                 return this.IfStatement();
             case 'while':
@@ -138,6 +144,63 @@ class Parser {
             default:
                 return this.ExpressionStatement();
         }
+    }
+
+    /**
+     * FunctionDeclaration
+     *      : 'def' Identifier '(' OptFormalParameterList ')' BlockStatement
+     *      ;
+     */
+    FunctionDeclaration() {
+        this._eat('def');
+        const name = this.Identifier();
+        this._eat('(');
+        let params = [];
+        if (this._lookahead.type !== ')') {
+            params = this.OptFormalParameterList();
+        }
+        this._eat(')');
+        const body = this.BlockStatement();
+
+        return {
+            type: 'FunctionDeclaration',
+            name,
+            params,
+            body,
+        };
+    }
+
+    /**
+     * OptFormalParameterList
+     *      : Identifier
+     *      | OptFormalParameterList ',' Identifier
+     *      ;
+     */
+    OptFormalParameterList() {
+        let params = [this.Identifier()];
+        while (this._lookahead.type === ',') {
+            this._eat(',');
+            params.push(this.Identifier());
+        }
+        return params;
+    }
+
+    /**
+     * ReturnStatement
+     *      : 'return' ';'
+     *      | 'return' Expression ';'
+     *      ;
+     */
+    ReturnStatement() {
+        this._eat('return');
+        const argument = this._lookahead.type !== ';'
+            ? this.Expression() : null;
+        this._eat(';');
+
+        return {
+            type: 'ReturnStatement',
+            argument,
+        };
     }
 
     /**
