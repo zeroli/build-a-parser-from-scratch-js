@@ -21,6 +21,9 @@ const tests = [
     require('./equality-test.js'),
     require('./logical-test.js'),
     require('./unary-test.js'),
+    require('./while-test.js'),
+    require('./do-white-test.js'),
+    require('./for-test.js'),
 ];
 
 const parser = new Parser();
@@ -28,9 +31,9 @@ const parser = new Parser();
 function exec() {
     console.log('manual parsing:');
     const program = `
-        !x;
-        -x;
-        +(x+y) * -10;
+      for (let i = 0; i < 10; i += 1) {
+        x += 1;
+      }
     `;
     const ast = parser.parse(program);
 
