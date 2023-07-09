@@ -33,12 +33,7 @@ const parser = new Parser();
 function exec() {
     console.log('manual parsing:');
     const program = `
-        let s = "hello, world";
-        let i = 0;
-        while (i < s.length) {
-            s[i];
-            i += 1;
-        }
+        foo()['x'];
     `;
     const ast = parser.parse(program);
 

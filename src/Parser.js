@@ -562,19 +562,22 @@ class Parser {
      *      ;
      */
     LeftHandSideExpression() {
-        return this.MemberExpression();
+        return this.CallMemberExpression();
     }
 
     /**
-     * MemberExpression
+     * CallMemberExpression
      *      : Identifier
-     *      | MemberExpression '.' Identifier
-     *      | MemberExpression '[' Expression ']'
+     *      | CallMemberExpression '.' Identifier
+     *      | CallMemberExpression '[' Expression ']'
+     *      | CallMemberExpression '(' OptCallArgumentList ')'
      *      ;
      */
-    MemberExpression() {
+    CallMemberExpression() {
         let object = this.Identifier();
-        while (this._lookahead.type === '.' || this._lookahead.type === '[') {
+        while (this._lookahead.type === '.' ||
+             this._lookahead.type === '[' ||
+             this._lookahead.type === '(') {
             if (this._lookahead.type === '.') {
                 this._eat('.');
                 const property = this.Identifier();
@@ -596,8 +599,33 @@ class Parser {
                     property,
                 };
             }
+            if (this._lookahead.type === '(') {
+                this._eat('(');
+                const args = this._lookahead.type !== ')' ?
+                    this.OptCallArgumentList() : [];
+                this._eat(')');
+                object = {
+                    type: 'CallExpression',
+                    callee: object,
+                    arguments: args,
+                };
+            }
         }
         return object;
+    }
+
+    /**
+     * OptCallArgumentList
+     *      : Expression
+     *      | OptCallArgumentList ',' Expression
+     *      ;
+     */
+    OptCallArgumentList() {
+        let args = [];
+        do {
+            args.push(this.Expression());
+        } while (this._lookahead.type == ',' && this._eat(','));
+        return args;
     }
 
     /**
