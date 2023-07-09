@@ -25,6 +25,7 @@ const tests = [
     require('./do-white-test.js'),
     require('./for-test.js'),
     require('./function-declaration-test.js'),
+    require('./member-test.js'),
 ];
 
 const parser = new Parser();
@@ -32,10 +33,12 @@ const parser = new Parser();
 function exec() {
     console.log('manual parsing:');
     const program = `
-      def square(x) {
-        return x * x;
-      }
-      //square(2);
+        let s = "hello, world";
+        let i = 0;
+        while (i < s.length) {
+            s[i];
+            i += 1;
+        }
     `;
     const ast = parser.parse(program);
 
