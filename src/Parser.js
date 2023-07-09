@@ -266,12 +266,12 @@ class Parser {
 
     /**
      * AssignmentExpression
-     *      : EqualityExpression
+     *      : LogicalORExpression
      *      | LeftHandSideExpression AssignmentOperator AssignmentExpression
      *      ;
      */
     AssignmentExpression() {
-        const left = this.EqualityExpression();
+        const left = this.LogicalORExpression();
 
         if (!this._isAssignmentOperator(this._lookahead.type)) {
             return left;
@@ -286,13 +286,58 @@ class Parser {
     }
 
     /**
+     * Logical OR expression (precedenc lower than logical AND)
+     *      x || y
+     *
+     * LogicalORExpression
+     *      : LogicalANDExpression
+     *      | LogicalORExpression LOGICAL_OR LogicalANDExpression
+     *      ;
+     */
+    LogicalORExpression() {
+        return this._LogicalExpression('LogicalANDExpression', 'LOGICAL_OR');
+    }
+
+    /**
+     * Logical AND expression
+     *      x && y
+     *
+     * LogicalANDExpression
+     *      : EqualityExpression
+     *      | LogicalANDExpression LOGICAL_AND EqualityExpression
+     *      ;
+     */
+    LogicalANDExpression() {
+        return this._LogicalExpression('EqualityExpression', 'LOGICAL_AND');
+    }
+
+    /**
+     * Generic helper for LogicalExpression node
+     */
+    _LogicalExpression(buildName, operatorToken) {
+        let left = this[buildName]();
+
+        while (this._lookahead.type == operatorToken) {
+            const operator = this._eat(operatorToken).value;
+            const right = this[buildName]();
+            left = {
+                type: 'LogicalExpression',
+                operator,
+                left,
+                right,
+            };
+        }
+        return left;
+    }
+
+    /**
      * EQUALITY_OPERTORS: ==, !=
      * x == y
      * x != y
      *
      * EqualityExpression
      *      : RelationalExpression
-     *      | RelationalExpression EQUALITY_OPERATOR EqualityExpression
+     *      | EqualityExpression EQUALITY_OPERATOR RelationalExpression
      *      ;
      */
     EqualityExpression() {
@@ -308,7 +353,7 @@ class Parser {
      *
      * RelationalExpression
      *      : AdditiveExpression
-     *      | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
+     *      | RelationalExpression RELATIONAL_OPERATOR AdditiveExpression
      *      ;
      */
     RelationalExpression() {
