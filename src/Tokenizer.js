@@ -19,6 +19,9 @@ const Spec = [
     [/^,/, ','], // comma
 
     [/^\blet\b/, 'let'],
+    [/^\bif\b/, 'if'],
+    [/^\belse\b/, 'else'],
+
     // Number
     [/^\d+/, 'NUMBER'],
 
@@ -32,6 +35,8 @@ const Spec = [
     // math operators: +, -, *, /
     [/^[+-]/, 'ADDITIVE_OPERATOR'],
     [/^[*/]/, 'MULTIPLICATIVE_OPERATOR'],
+    // relational operators: >, >=, <, <=
+    [/^[><]=?/, 'RELATIONAL_OPERATOR'],
 
     // String
     [/^"[^"]*"/, 'STRING'],

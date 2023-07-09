@@ -16,6 +16,8 @@ const tests = [
     require('./math-test.js'),
     require('./assignment-test.js'),
     require('./variable-test.js'),
+    require('./if-test.js'),
+    require('./relational-test.js'),
 ];
 
 const parser = new Parser();
@@ -23,14 +25,8 @@ const parser = new Parser();
 function exec() {
     console.log('manual parsing:');
     const program = `
-        /**
-         * Documentation comment:
-         */
-        "hello";
-        // Number:
-        x = 42 + 20;
-        let y = x * 20;
-        let y, z;
+        x + 5 > 10;
+        x > 10 < 1;
     `;
     const ast = parser.parse(program);
 
