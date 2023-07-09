@@ -22,11 +22,18 @@ const Spec = [
     [/^\bif\b/, 'if'],
     [/^\belse\b/, 'else'],
 
+    [/^\btrue\b/, 'true'],
+    [/^\bfalse\b/, 'false'],
+    [/^\bnull\b/, 'null'],
+
     // Number
     [/^\d+/, 'NUMBER'],
 
     // Identifiers:
     [/^\w+/, 'IDENTIFIER'],
+
+    // before assignment operators
+    [/^[=!]=/, 'EQUALITY_OPERATOR'],
 
     // Assignment operators: =, *=, /=, +=, -=
     [/^=/, 'SIMPLE_ASSIGN'],

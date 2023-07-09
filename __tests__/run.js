@@ -18,6 +18,7 @@ const tests = [
     require('./variable-test.js'),
     require('./if-test.js'),
     require('./relational-test.js'),
+    require('./equality-test.js'),
 ];
 
 const parser = new Parser();
@@ -25,8 +26,7 @@ const parser = new Parser();
 function exec() {
     console.log('manual parsing:');
     const program = `
-        x + 5 > 10;
-        x > 10 < 1;
+        x > 0 == null;
     `;
     const ast = parser.parse(program);
 
