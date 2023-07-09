@@ -15,6 +15,7 @@ const tests = [
     require('./empty-statement-test.js'),
     require('./math-test.js'),
     require('./assignment-test.js'),
+    require('./variable-test.js'),
 ];
 
 const parser = new Parser();
@@ -28,6 +29,8 @@ function exec() {
         "hello";
         // Number:
         x = 42 + 20;
+        let y = x * 20;
+        let y, z;
     `;
     const ast = parser.parse(program);
 
