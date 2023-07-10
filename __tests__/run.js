@@ -9,7 +9,7 @@ const assert = require('assert');
  * list of tests
  */
 const tests = [
-    require('./literals-test.js'),
+/*     require('./literals-test.js'),
     require('./statement-list-test.js'),
     require('./block-test.js'),
     require('./empty-statement-test.js'),
@@ -26,7 +26,7 @@ const tests = [
     require('./for-test.js'),
     require('./function-declaration-test.js'),
     require('./member-test.js'),
-    require('./call-test.js'),
+    require('./call-test.js'), */
     require('./class-test.js'),
 ];
 
@@ -70,6 +70,6 @@ function test(program, expected) {
 exec();
 
 // run all tests
-//tests.forEach(testRun => testRun(test));
+tests.forEach(testRun => testRun(test));
 
 console.log("all test passed");
